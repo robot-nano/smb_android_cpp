@@ -18,9 +18,9 @@ import java.util.Map;
 
 class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
 
-//  static {
-//    System.loadLibrary("samba_client");
-//  }
+  static {
+    System.loadLibrary("samba_client");
+  }
 
   private static final String TAG = "SambaConfiguration";
 
