@@ -1,3 +1,20 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.browsing.broadcast;
 
 import android.util.Log;
@@ -18,13 +35,18 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
-public class BroadcastUtils {
+class BroadcastUtils {
   private static final String TAG = "BroadcastUtils";
 
   private static final int FILE_SERVER_NODE_TYPE = 0x20;
   private static final int SERVER_NAME_LENGTH = 15;
   private static final String SERVER_NAME_CHARSET = "US-ASCII";
 
+  /**
+   * Generates a NetBIOS name query request.
+   * https://tools.ietf.org/html/rfc1002
+   * Section 4.2.12
+   */
   static byte[] createPacket(int transId) {
     ByteBuffer os = ByteBuffer.allocate(50);
 
@@ -32,13 +54,14 @@ public class BroadcastUtils {
     char questionCount = 1;
     char answerResourceCount = 0;
     char authorityResourceCount = 0;
-    char additionResourceCount = 0;
+    char additionalResourceCount = 0;
 
     os.putChar((char) transId);
     os.putChar(broadcastFlag);
+    os.putChar(questionCount);
     os.putChar(answerResourceCount);
     os.putChar(authorityResourceCount);
-    os.putChar(additionResourceCount);
+    os.putChar(additionalResourceCount);
 
     // Length of name. 16 bytes of name encoded to 32 bytes.
     os.put((byte) 0x20);
@@ -48,11 +71,11 @@ public class BroadcastUtils {
     os.put((byte) 0x4b);
 
     // Write the remaining 15 nulls which encode to 30* 0x41
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 30; i++) {
       os.put((byte) 0x41);
     }
 
-    // length of next segment.
+    // Length of next segment.
     os.put((byte) 0);
 
     // Question type: Node status
@@ -64,6 +87,11 @@ public class BroadcastUtils {
     return os.array();
   }
 
+  /**
+   * Parses a positive response to NetBIOS name request query.
+   * https://tools.ietf.org/html/rfc1002
+   * Section 4.2.13
+   */
   static List<String> extractServers(byte[] data, int expectedTransId) throws BrowsingException {
     try {
       ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN);
@@ -100,8 +128,8 @@ public class BroadcastUtils {
 
       int addressListEntryCount = buffer.get();
 
-      List<String>  servers = new ArrayList<>();
-      for (int i = 0; i < addressListEntryCount; ++i) {
+      List<String> servers = new ArrayList<>();
+      for (int i = 0; i < addressListEntryCount; i++) {
         byte[] nameArray = new byte[SERVER_NAME_LENGTH];
         buffer.get(nameArray, 0, SERVER_NAME_LENGTH);
 
@@ -135,7 +163,7 @@ public class BroadcastUtils {
       }
 
       for (InterfaceAddress interfaceAddress :
-      networkInterface.getInterfaceAddresses()) {
+              networkInterface.getInterfaceAddresses()) {
         InetAddress broadcast = interfaceAddress.getBroadcast();
 
         if (broadcast != null) {
@@ -148,7 +176,7 @@ public class BroadcastUtils {
   }
 
   private static void skipBytes(ByteBuffer buffer, int bytes) {
-    for (int i = 0; i < bytes; ++i) {
+    for (int i = 0; i < bytes; i++) {
       buffer.get();
     }
   }

@@ -1,17 +1,32 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.nativefacade;
 
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.Message;
-
 import androidx.annotation.IntDef;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-public class CredentialCacheClient extends BaseClient implements CredentialCache {
+class CredentialCacheClient extends BaseClient implements CredentialCache {
 
-  @IntDef({PUT_CREDENTIAL, REMOVE_CREDENTIAL})
+  @IntDef( {PUT_CREDENTIAL, REMOVE_CREDENTIAL })
   @Retention(RetentionPolicy.SOURCE)
   @interface Operation {}
   private static final int PUT_CREDENTIAL = 1;
@@ -78,7 +93,7 @@ public class CredentialCacheClient extends BaseClient implements CredentialCache
           break;
         }
         default:
-          throw new UnsupportedOperationException("Unknown operation "  + msg.what);
+          throw new UnsupportedOperationException("Unknown operation " + msg.what);
       }
     }
   }

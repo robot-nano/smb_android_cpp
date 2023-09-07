@@ -1,23 +1,37 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb;
 
 import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+
 import android.util.Log;
-import android.net.ConnectivityManager.NetworkCallback;
-
-import androidx.annotation.NonNull;
-
 import com.example.smb.SambaConfiguration.OnConfigurationChangedListener;
 import com.example.smb.browsing.NetworkBrowser;
 import com.example.smb.cache.DocumentCache;
 import com.example.smb.nativefacade.CredentialCache;
 import com.example.smb.nativefacade.SambaMessageLooper;
 import com.example.smb.nativefacade.SmbFacade;
-
 import java.io.File;
 
 public class SambaProviderApplication extends Application {
@@ -71,11 +85,11 @@ public class SambaProviderApplication extends Application {
       }
     };
 
-    // Sync from external folder. The reason why we don't use external folder directory as HOME is
-    // because there are cases where external storage is not ready, and we don't have an extenral
+    // Sync from external folder. The reason why we don't use external folder directly as HOME is
+    // because there are cases where external storage is not ready, and we don't have an external
     // folder at all.
     if (sambaConf.syncFromExternal(listener)) {
-      if (BuildConfig.DEBUG) Log.d(TAG, "Syncing smb.conf from external folder. No need to try"
+      if (BuildConfig.DEBUG) Log.d(TAG, "Syncing smb.conf from external folder. No need to try "
           + "flushing default config.");
       return;
     }
@@ -93,7 +107,7 @@ public class SambaProviderApplication extends Application {
             .build(),
         new NetworkCallback() {
           @Override
-          public void onAvailable(@NonNull Network network) {
+          public void onAvailable(Network network) {
             mSambaClient.reset();
           }
         });

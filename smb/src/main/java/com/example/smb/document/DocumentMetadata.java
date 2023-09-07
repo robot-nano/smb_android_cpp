@@ -1,21 +1,35 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.document;
 
 import android.net.Uri;
 import android.provider.DocumentsContract.Document;
+import androidx.annotation.Nullable;
 import android.system.OsConstants;
 import android.system.StructStat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
-import androidx.annotation.Nullable;
-
 import com.example.smb.R;
 import com.example.smb.base.DirectoryEntry;
 import com.example.smb.nativefacade.SmbClient;
 import com.example.smb.nativefacade.SmbDir;
-
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +37,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * This is a snapshot of the metadata of a seen document. It contains its SMB URI, display name,
+ * access/create/modified time, size, its children etc sometime in the past. It also contains
+ * the last exception thrown when querying its children.
+ *
+ * The metadata inside this class may be fetched at different time due to Samba client API.
+ */
 public class DocumentMetadata {
 
   private static final String TAG = "DocumentMetadata";
@@ -59,8 +80,9 @@ public class DocumentMetadata {
       case DirectoryEntry.SERVER:
         return R.drawable.ic_server;
       case DirectoryEntry.FILE_SHARE:
-        return R.drawable.ic_shared;
+        return R.drawable.ic_folder_shared;
       default:
+        // Tells SAF to use the default icon.
         return null;
     }
   }
@@ -90,6 +112,7 @@ public class DocumentMetadata {
       case DirectoryEntry.SERVER:
       case DirectoryEntry.FILE_SHARE:
       case DirectoryEntry.DIR:
+        // Everything is writable so no need to fetch stats for them.
         return false;
       default:
         throw new UnsupportedOperationException(
@@ -150,7 +173,7 @@ public class DocumentMetadata {
       return null;
     }
 
-    final int idxOfDot = name.lastIndexOf('.');
+    final int idxOfDot = name.lastIndexOf('.', name.length() - 1);
     if (idxOfDot <= 0) {
       return null;
     }
@@ -175,7 +198,7 @@ public class DocumentMetadata {
     }
   }
 
-  public boolean hasLoadingStateFailed() {
+  public boolean hasLoadingStatFailed() {
     final Exception e = mLastStatException.getAndSet(null);
     return e != null;
   }
@@ -185,6 +208,10 @@ public class DocumentMetadata {
     mUri = newUri;
   }
 
+  /**
+   * Gets children of this document.
+   * @return the list of children or {@code null} if it's not fetched yet.
+   */
   public @Nullable Map<Uri, DocumentMetadata> getChildren() {
     return mChildren.get();
   }
@@ -203,6 +230,7 @@ public class DocumentMetadata {
 
       mChildren.set(children);
       mTimeStamp = System.currentTimeMillis();
+
     } catch (Exception e) {
       Log.e(TAG, "Failed to load children.", e);
       mLastChildUpdateException.set(e);
@@ -231,6 +259,7 @@ public class DocumentMetadata {
 
   public static Uri buildChildUri(Uri parentUri, DirectoryEntry entry) {
     switch (entry.getType()) {
+      // TODO: Support LINK type?
       case DirectoryEntry.LINK:
       case DirectoryEntry.COMMS_SHARE:
       case DirectoryEntry.IPC_SHARE:
@@ -265,6 +294,8 @@ public class DocumentMetadata {
   public static Uri buildParentUri(Uri childUri) {
     final List<String> segments = childUri.getPathSegments();
     if (segments.isEmpty()) {
+      // This is possibly a server or a workgroup. We don't know its exact parent, so just return
+      // "smb://".
       return SMB_BASE_URI;
     }
 
@@ -279,26 +310,26 @@ public class DocumentMetadata {
     return uri.getPathSegments().isEmpty() && !uri.getAuthority().isEmpty();
   }
 
-  public static boolean isSharedUri(Uri uri) {
+  public static boolean isShareUri(Uri uri) {
     return uri.getPathSegments().size() == 1;
   }
 
-  public static DocumentMetadata fromUri(Uri uri, SmbClient client) throws IOException  {
+  public static DocumentMetadata fromUri(Uri uri, SmbClient client) throws IOException {
     final List<String> pathSegments = uri.getPathSegments();
     if (pathSegments.isEmpty()) {
       throw new UnsupportedOperationException("Can't load metadata for workgroup or server.");
     }
 
     final StructStat stat = client.stat(uri.toString());
-    final DirectoryEntry entry = new DirectoryEntry(
-        OsConstants.S_ISDIR(stat.st_mode) ? DirectoryEntry.DIR : DirectoryEntry.FILE,
-        "",
-        uri.getLastPathSegment());
-    final DocumentMetadata metadata = new DocumentMetadata(uri, entry);
-    metadata.mStat.set(stat);
+      final DirectoryEntry entry = new DirectoryEntry(
+          OsConstants.S_ISDIR(stat.st_mode) ? DirectoryEntry.DIR : DirectoryEntry.FILE,
+          "",
+          uri.getLastPathSegment());
+      final DocumentMetadata metadata = new DocumentMetadata(uri, entry);
+      metadata.mStat.set(stat);
 
-    return metadata;
-  }
+      return metadata;
+    }
 
   public static DocumentMetadata createShare(String host, String share) {
     final Uri uri = SMB_BASE_URI.buildUpon().authority(host).encodedPath(share).build();
@@ -315,7 +346,7 @@ public class DocumentMetadata {
 
   private static DocumentMetadata create(Uri uri, @DirectoryEntry.Type int type) {
     final DirectoryEntry entry =
-        new DirectoryEntry(type, "", uri.getLastPathSegment());
+            new DirectoryEntry(type, "", uri.getLastPathSegment());
     return new DocumentMetadata(uri, entry);
   }
 }

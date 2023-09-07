@@ -1,12 +1,26 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb;
 
+import androidx.annotation.Nullable;
 import android.system.ErrnoException;
 import android.util.Log;
-
-import androidx.annotation.Nullable;
-
 import com.example.smb.base.BiResultTask;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -15,6 +29,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
 
@@ -57,7 +72,7 @@ class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
     // bcast -- NetBIOS broadcast
     addConfiguration("name resolve order", "wins bcast hosts");
 
-    // Urge from users to disable SMB1 by default
+    // Urge from users to disable SMB1 by default.
     addConfiguration("client min protocol", "SMB2");
     addConfiguration("client max protocol", "SMB3");
 
@@ -112,9 +127,9 @@ class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
   private synchronized void write() throws IOException {
     try (PrintStream fs = new PrintStream(getSmbFile(mHomeFolder))) {
       for (Map.Entry<String, String> entry : mConfigurations.entrySet()) {
-        fs.println(entry.getKey());
-        fs.println(CONF_KEY_VALUE_SEPARATOR);
-        fs.println(entry.getValue());
+        fs.print(entry.getKey());
+        fs.print(CONF_KEY_VALUE_SEPARATOR);
+        fs.print(entry.getValue());
         fs.println();
       }
 
@@ -128,7 +143,7 @@ class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
       Log.e(TAG, "Failed to obtain .smb folder.");
     }
 
-    return new File(smbFolder, SMB_FOLDER_NAME);
+    return new File(smbFolder, SMB_CONF_FILE);
   }
 
   private static File getExtSmbFile(File shareFolder) {
@@ -138,7 +153,7 @@ class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
   private void setHomeEnv(String absoluteFolder) {
     try {
       setEnv(HOME_VAR, absoluteFolder);
-    } catch (ErrnoException e) {
+    } catch(ErrnoException e) {
       Log.e(TAG, "Failed to set HOME environment variable.", e);
     }
   }
@@ -146,7 +161,7 @@ class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
   private native void setEnv(String var, String value) throws ErrnoException;
 
   @Override
-  public synchronized Iterator<Map.Entry<String, String>> iterator() {
+  public synchronized Iterator<Entry<String, String>> iterator() {
     return mConfigurations.entrySet().iterator();
   }
 
@@ -159,14 +174,14 @@ class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
     }
 
     @Override
-    public Void run(File... params) throws Exception {
+    public Void run(File... params) throws IOException {
       read(params[0]);
       write();
       return null;
     }
 
     @Override
-    public void onSucceeded(Void unused) {
+    public void onSucceeded(Void result) {
       mListener.onConfigurationChanged();
     }
   }
@@ -179,13 +194,13 @@ class SambaConfiguration implements Iterable<Map.Entry<String, String>> {
     }
 
     @Override
-    public Void run(Void... voids) throws Exception {
+    public Void run(Void... params) throws IOException {
       write();
       return null;
     }
 
     @Override
-    public void onSucceeded(Void unused) {
+    public void onSucceeded(Void result) {
       mListener.onConfigurationChanged();
     }
   }

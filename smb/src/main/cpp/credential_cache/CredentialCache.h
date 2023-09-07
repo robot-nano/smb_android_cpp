@@ -17,12 +17,12 @@ struct CredentialTuple {
 };
 
 class CredentialCache {
-public:
-    struct CredentialTuple get(const std::string &key) const;
-    void put(const char* key, const CredentialTuple &tuple);
-    void remove(const char* key);
-private:
-    std::unordered_map<std::string, CredentialTuple> credentialMap_;
+ public:
+  struct CredentialTuple get(const std::string &key) const;
+  void put(const char *key, const struct CredentialTuple &tuple);
+  void remove(const char *key);
+ private:
+  std::unordered_map<std::string, CredentialTuple> credentialMap_;
 };
 
 }

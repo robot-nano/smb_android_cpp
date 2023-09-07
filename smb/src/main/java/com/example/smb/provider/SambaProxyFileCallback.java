@@ -1,17 +1,36 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.provider;
 
 import android.annotation.TargetApi;
+import android.net.Uri;
+import android.os.CancellationSignal;
 import android.os.ProxyFileDescriptorCallback;
+import androidx.annotation.Nullable;
 import android.system.ErrnoException;
 import android.system.OsConstants;
 import android.system.StructStat;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import com.example.smb.base.OnTaskFinishedCallback;
 import com.example.smb.nativefacade.SmbFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -29,6 +48,7 @@ public class SambaProxyFileCallback extends ProxyFileDescriptorCallback {
       SmbFile file,
       ByteBufferPool bufferPool,
       @Nullable OnTaskFinishedCallback<String> callback) {
+
     mUri = uri;
     mFile = file;
     mBufferPool = bufferPool;
@@ -63,7 +83,7 @@ public class SambaProxyFileCallback extends ProxyFileDescriptorCallback {
       }
 
       return total;
-    }catch (IOException e) {
+    } catch (IOException e) {
       throwErrnoException(e);
     } finally {
       mBufferPool.recycleBuffer(buffer);
@@ -115,6 +135,8 @@ public class SambaProxyFileCallback extends ProxyFileDescriptorCallback {
   }
 
   private void throwErrnoException(IOException e) throws ErrnoException {
+    // Hack around that SambaProxyFileCallback throws ErrnoException rather than IOException
+    // assuming the underlying cause is an ErrnoException.
     if (e.getCause() instanceof ErrnoException) {
       throw (ErrnoException) e.getCause();
     } else {

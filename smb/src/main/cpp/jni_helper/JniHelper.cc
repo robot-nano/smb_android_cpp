@@ -320,6 +320,7 @@ Java_com_example_smb_nativefacade_NativeSambaFacade_rename(
             env, "%s is not found, or parent of %s is not found.", uri, nuri);
         break;
       case EACCES:
+      case EPERM:
         LOGD(TAG, "No access to either %s or %s.", uri, nuri);
         throw_new_auth_failed_exception(env);
         break;
@@ -352,7 +353,7 @@ Java_com_example_smb_nativefacade_NativeSambaFacade_unlink(
         break;
       case EACCES:
       case EPERM:
-        LOGD(TAG, "No access to %s", uri);
+        LOGD(TAG, "No access to %s.", uri);
         throw_new_auth_failed_exception(env);
         break;
       default:
@@ -422,7 +423,7 @@ jint Java_com_example_smb_nativefacade_NativeSambaFacade_openFile(
     flag = O_WRONLY;
     if (mode[1] == 'a') {
       flag |= O_APPEND;
-    } else if (mode[1] == '\0') {
+    } else if (mode[1] =='\0') {
       flag |= O_TRUNC;
     }
   }
@@ -633,7 +634,7 @@ void Java_com_example_smb_SambaConfiguration_setEnv(
     goto bail;
   }
 
-  if (setenv(value, value, true) < 0) {
+  if (setenv(var, value, true) < 0) {
     throw_new_errno_exception(env, "setEnv", errno);
   }
 

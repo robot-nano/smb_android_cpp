@@ -16,8 +16,8 @@ struct CredentialTuple CredentialCache::get(const std::string &key) const {
     }
 }
 
-void CredentialCache::put(const char *key, const CredentialTuple &tuple) {
-    credentialMap_[key] = tuple;
+void CredentialCache::put(const char *key, const struct CredentialTuple &tuple) {
+  credentialMap_[key] = tuple;
 }
 
 void CredentialCache::remove(const char *key_) {

@@ -1,13 +1,29 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.cache;
 
+import android.os.Build;
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pools;
-import androidx.core.util.Pools.SynchronizedPool;
 
 import com.example.smb.BuildConfig;
 import com.example.smb.document.DocumentMetadata;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -20,14 +36,14 @@ public class CacheResult implements AutoCloseable {
   public static final int CACHE_HIT = 1;
   public static final int CACHE_EXPIRED = 2;
 
-  private static final Pools.Pool<CacheResult> POOL = new SynchronizedPool<>(10);
+  private static final Pools.Pool<CacheResult> POOL = new Pools.SynchronizedPool<>(10);
 
   private @State int mState;
   private @Nullable DocumentMetadata mItem;
 
   private CacheResult() {}
 
-  private @State int getState() {
+  public @State int getState() {
     return mState;
   }
 
@@ -54,7 +70,7 @@ public class CacheResult implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     recycle();
   }
 }

@@ -40,14 +40,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-<!--            <com.google.android.sambadocumentsprovider.mount.BrowsingAutocompleteTextView-->
-<!--                android:id="@+id/share_path"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="@dimen/clickable_height"-->
-<!--                android:minLines="1"-->
-<!--                android:maxLines="1"-->
-<!--                android:inputType="textUri"-->
-<!--                android:hint="@string/share_path"/>-->
+            <com.example.smb.mount.BrowsingAutocompleteTextView
+                android:id="@+id/share_path"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/clickable_height"
+                android:minLines="1"
+                android:maxLines="1"
+                android:inputType="textUri"
+                android:hint="@string/share_path"/>
 
             <CheckBox
                 android:id="@+id/needs_password"

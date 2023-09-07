@@ -1,20 +1,36 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.nativefacade;
 
-import android.annotation.SuppressLint;
+import android.os.Bundle;
 import android.os.Looper;
 import android.os.Message;
-import android.system.StructStat;
-
 import androidx.annotation.IntDef;
+import android.system.StructStat;
 
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.nio.ByteBuffer;
 
-public class SambaFileClient extends BaseClient implements SmbFile {
+class SambaFileClient extends BaseClient implements SmbFile {
 
-  @IntDef({READ, WRITE, CLOSE})
+  @IntDef({ READ, WRITE, CLOSE })
   @Retention(RetentionPolicy.SOURCE)
   @interface Operation {}
   private static final int READ = 1;
@@ -29,7 +45,7 @@ public class SambaFileClient extends BaseClient implements SmbFile {
 
   @Override
   public int read(ByteBuffer buffer, int maxLen) throws IOException {
-    try (final MessageValues<ByteBuffer> messageValues = MessageValues.obtain()) {
+    try(final MessageValues<ByteBuffer> messageValues = MessageValues.obtain()) {
       messageValues.setInt(maxLen);
       messageValues.setObj(buffer);
       final Message msg = mHandler.obtainMessage(READ, messageValues);
@@ -90,7 +106,7 @@ public class SambaFileClient extends BaseClient implements SmbFile {
 
     @Override
     @SuppressWarnings("unchecked")
-    void processMessage(Message msg) {
+    public void processMessage(Message msg) {
       final MessageValues messageValues = (MessageValues) msg.obj;
       try {
         switch (msg.what) {
@@ -101,7 +117,7 @@ public class SambaFileClient extends BaseClient implements SmbFile {
             break;
           }
           case WRITE: {
-            final ByteBuffer writeBuffer = (ByteBuffer)messageValues.getObj();
+            final ByteBuffer writeBuffer = (ByteBuffer) messageValues.getObj();
             final int length = msg.arg1;
             messageValues.setInt(mSmbFileImpl.write(writeBuffer, length));
             break;

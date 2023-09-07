@@ -1,13 +1,36 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.nativefacade;
 
-import androidx.core.util.Pools.Pool;
-import androidx.core.util.Pools.SynchronizedPool;
+import androidx.core.util.Pools;
 
 import java.io.IOException;
 
+/**
+ * A class used for pass values between two sides of {@link SambaMessageLooper}.
+ *
+ * If it were C/C++, this would be a union type.
+ *
+ * @param <T> A convenient parameterized type to avoid casting everywhere.
+ */
 class MessageValues<T> implements AutoCloseable {
 
-  private static final Pool<MessageValues<?>> POOL = new SynchronizedPool<>(20);
+  private static final Pools.Pool<MessageValues<?>> POOL = new Pools.SynchronizedPool<>(20);
 
   private volatile T mObj;
   private volatile int mInt;
@@ -78,6 +101,5 @@ class MessageValues<T> implements AutoCloseable {
     mException = null;
     mRuntimeException = null;
     POOL.release(this);
-
   }
 }

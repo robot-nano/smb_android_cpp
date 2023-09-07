@@ -1,3 +1,20 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb;
 
 import android.content.Context;
@@ -8,12 +25,9 @@ import android.util.JsonToken;
 import android.util.JsonWriter;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import com.example.smb.encryption.EncryptionException;
 import com.example.smb.encryption.EncryptionManager;
 import com.example.smb.nativefacade.CredentialCache;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -42,7 +56,7 @@ public class ShareManager implements Iterable<String> {
 
   private final SharedPreferences mPref;
   private final Set<String> mServerStringSet;
-  private final Set<String> mMountServerSet = new HashSet<>();
+  private final Set<String> mMountedServerSet = new HashSet<>();
   private final Map<String, String> mServerStringMap = new HashMap<>();
   private final CredentialCache mCredentialCache;
 
@@ -58,7 +72,7 @@ public class ShareManager implements Iterable<String> {
     mPref = context.getSharedPreferences(SERVER_CACHE_PREF_KEY, Context.MODE_PRIVATE);
     // Loading saved servers.
     final Set<String> serverStringSet =
-        mPref.getStringSet(SERVER_STRING_SET_KEY, Collections.emptySet());
+        mPref.getStringSet(SERVER_STRING_SET_KEY, Collections.<String> emptySet());
 
     final Map<String, ShareTuple> shareMap = new HashMap<>(serverStringSet.size());
     final List<String> forceEncryption = new ArrayList<>();
@@ -86,7 +100,7 @@ public class ShareManager implements Iterable<String> {
       final ShareTuple tuple = server.getValue();
 
       if (tuple.mIsMounted) {
-        mMountServerSet.add(server.getKey());
+        mMountedServerSet.add(server.getKey());
       }
 
       mCredentialCache.putCredential(
@@ -99,38 +113,41 @@ public class ShareManager implements Iterable<String> {
    * Throw an exception if a server with such a uri is already present.
    */
   public synchronized void addServer(
-      String uri, String workgroup, String username, String password,
-      ShareMountChecker checker, boolean mount) throws IOException {
+          String uri, String workgroup, String username, String password,
+          ShareMountChecker checker, boolean mount) throws IOException {
 
-    if (mMountServerSet.contains(uri)) {
+    if (mMountedServerSet.contains(uri)) {
       throw new IllegalStateException("Uri " + uri + " is already stored.");
     }
 
     saveServerInfo(uri, workgroup, username, password, checker, mount);
   }
 
+  /**
+   * Update the server info. If a server with such a uri doesn't exist, create it.
+   */
   public synchronized void addOrUpdateServer(
-      String uri, String workgroup, String username, String password,
-      ShareMountChecker checker, boolean mount) throws IOException {
+          String uri, String workgroup, String username, String password,
+          ShareMountChecker checker, boolean mount) throws IOException {
     saveServerInfo(uri, workgroup, username, password, checker, mount);
   }
 
   private void saveServerInfo(
-      String uri, String workgroup, String username, String password,
-      ShareMountChecker checker, boolean mount) throws IOException {
+          String uri, String workgroup, String username, String password,
+          ShareMountChecker checker, boolean mount) throws IOException {
 
     checkServerCredentials(uri, workgroup, username, password, checker);
 
     final boolean hasPassword = !TextUtils.isEmpty(username) && !TextUtils.isEmpty(password);
     final ShareTuple tuple = hasPassword
-        ? new ShareTuple(workgroup, username, password, mount)
-        : ShareTuple.EMPTY_TUPLE;
+            ? new ShareTuple(workgroup, username, password, mount)
+            : ShareTuple.EMPTY_TUPLE;
 
-    updateServerData(uri, tuple, mount);
+    updateServersData(uri, tuple, mount);
   }
 
-  private void updateServerData(
-      String uri, ShareTuple tuple, boolean shouldNotify) {
+  private void updateServersData(
+          String uri, ShareTuple tuple, boolean shouldNotify) {
     final String serverString = encode(uri, tuple);
     if (serverString == null) {
       throw new IllegalStateException("Failed to encode credential tuple.");
@@ -145,9 +162,9 @@ public class ShareManager implements Iterable<String> {
     }
 
     if (tuple.mIsMounted) {
-      mMountServerSet.add(uri);
+      mMountedServerSet.add(uri);
     } else {
-      mMountServerSet.remove(uri);
+      mMountedServerSet.remove(uri);
     }
     mPref.edit().putStringSet(SERVER_STRING_SET_KEY, mServerStringSet).apply();
     mServerStringMap.put(uri, encryptedString);
@@ -159,22 +176,13 @@ public class ShareManager implements Iterable<String> {
 
   private void checkServerCredentials(
       String uri, String workgroup, String username, String password, ShareMountChecker checker)
-    throws IOException {
+      throws IOException {
+
     if (!username.isEmpty() && !password.isEmpty()) {
       mCredentialCache.putCredential(uri, workgroup, username, password);
     }
 
     runMountChecker(uri, checker);
-  }
-
-  private void runMountServer(String uri, ShareMountChecker checker) throws IOException {
-    try {
-      checker.checkShareMounting();
-    } catch (Exception e) {
-      Log.i(TAG, "Failed  to mount server.", e);
-      mCredentialCache.removeCredential(uri);
-      throw e;
-    }
   }
 
   private void runMountChecker(String uri, ShareMountChecker checker) throws IOException {
@@ -210,7 +218,7 @@ public class ShareManager implements Iterable<String> {
     }
 
     mServerStringMap.remove(uri);
-    mMountServerSet.remove(uri);
+    mMountedServerSet.remove(uri);
 
     mPref.edit().putStringSet(SERVER_STRING_SET_KEY, mServerStringSet).apply();
 
@@ -236,7 +244,7 @@ public class ShareManager implements Iterable<String> {
   }
 
   public synchronized boolean isShareMounted(String uri) {
-    return mMountServerSet.contains(uri);
+    return mMountedServerSet.contains(uri);
   }
 
   private void notifyServerChange() {
@@ -359,7 +367,7 @@ public class ShareManager implements Iterable<String> {
     private final String mWorkgroup;
     private final String mUsername;
     private final String mPassword;
-    private final boolean mIsMounted;
+    private boolean mIsMounted;
 
     private ShareTuple(String workgroup, String username, String password, boolean isMounted) {
       if (workgroup == null) {

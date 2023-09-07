@@ -1,5 +1,23 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.nativefacade;
 
+import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
@@ -7,18 +25,15 @@ import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 
 import com.example.smb.base.DirectoryEntry;
-
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 class SambaDirClient extends BaseClient implements SmbDir {
 
-  @IntDef({READ_DIR, CLOSE})
+  @IntDef({ READ_DIR, CLOSE })
   @Retention(RetentionPolicy.SOURCE)
-  @interface Operation {
-  }
-
+  @interface Operation {}
   private static final int READ_DIR = 0;
   private static final int CLOSE = READ_DIR + 1;
 

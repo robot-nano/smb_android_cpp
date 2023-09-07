@@ -1,16 +1,34 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.nativefacade;
 
 import android.annotation.TargetApi;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
-import android.system.StructStat;
-
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
+import android.system.StructStat;
 
+import com.example.smb.base.DirectoryEntry;
 import com.example.smb.base.OnTaskFinishedCallback;
 import com.example.smb.provider.ByteBufferPool;
 import com.example.smb.provider.SambaProxyFileCallback;
@@ -18,10 +36,12 @@ import com.example.smb.provider.SambaProxyFileCallback;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 class SambaFacadeClient extends BaseClient implements SmbFacade {
 
-  @IntDef({RESET, READ_DIR, STAT, MKDIR, RENAME, UNLINK, RMDIR, OPEN_FILE})
+  @IntDef({ RESET, READ_DIR, STAT, MKDIR, RENAME, UNLINK, RMDIR, OPEN_FILE })
   @Retention(RetentionPolicy.SOURCE)
   @interface Operation {}
   static final int RESET = 1;
@@ -138,9 +158,9 @@ class SambaFacadeClient extends BaseClient implements SmbFacade {
       @Nullable OnTaskFinishedCallback<String> callback) throws IOException {
     SambaFile file = openFileRaw(uri, mode);
     return storageManager.openProxyFileDescriptor(
-        ParcelFileDescriptor.parseMode(mode),
-        new SambaProxyFileCallback(uri, file, bufferPool, callback),
-        mHandler);
+            ParcelFileDescriptor.parseMode(mode),
+            new SambaProxyFileCallback(uri, file, bufferPool, callback),
+            mHandler);
   }
 
   private SambaFile openFileRaw(String uri, String mode) throws IOException {
@@ -151,7 +171,7 @@ class SambaFacadeClient extends BaseClient implements SmbFacade {
   }
 
   private Message obtainMessageForOpenFile(
-      String uri, String mode,  MessageValues<SambaFile> messageValues) {
+      String uri, String mode, MessageValues<SambaFile> messageValues) {
     final Message msg = obtainMessage(OPEN_FILE, messageValues, uri);
     msg.peekData().putString(MODE, mode);
     return msg;
@@ -168,7 +188,7 @@ class SambaFacadeClient extends BaseClient implements SmbFacade {
 
     @Override
     @SuppressWarnings("unchecked")
-    void processMessage(Message msg) {
+    public void processMessage(Message msg) {
       final Bundle args = msg.peekData();
       final String uri = args.getString(URI);
       final MessageValues messageValues = (MessageValues) msg.obj;
@@ -207,7 +227,7 @@ class SambaFacadeClient extends BaseClient implements SmbFacade {
             break;
           }
           default:
-            throw new UnsupportedOperationException("unknown operation " + msg.what);
+            throw new UnsupportedOperationException("Unknown operation " + msg.what);
         }
       } catch (IOException e) {
         messageValues.setException(e);
@@ -216,4 +236,5 @@ class SambaFacadeClient extends BaseClient implements SmbFacade {
       }
     }
   }
+
 }

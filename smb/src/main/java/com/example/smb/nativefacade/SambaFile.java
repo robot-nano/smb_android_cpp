@@ -1,3 +1,20 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.nativefacade;
 
 import android.system.ErrnoException;
@@ -24,7 +41,7 @@ class SambaFile implements SmbFile {
           read(mNativeHandler, mNativeFd, buffer, Math.min(maxLen, buffer.capacity()));
       mOffset += bytesRead;
       return bytesRead;
-    } catch (ErrnoException e) {
+    } catch(ErrnoException e) {
       throw new IOException("Failed to read file. Fd: " + mNativeFd, e);
     }
   }
@@ -34,7 +51,7 @@ class SambaFile implements SmbFile {
       final int bytesWritten = write(mNativeHandler, mNativeFd, buffer, length);
       mOffset += bytesWritten;
       return bytesWritten;
-    } catch (ErrnoException e) {
+    } catch(ErrnoException e) {
       throw new IOException("Failed to write file. Fd: " + mNativeFd, e);
     }
   }
@@ -67,19 +84,19 @@ class SambaFile implements SmbFile {
       int fd = mNativeFd;
       mNativeFd = -1;
       close(mNativeHandler, fd);
-    } catch (ErrnoException e) {
+    } catch(ErrnoException e) {
       throw new IOException("Failed to close file. Fd: " + mNativeFd, e);
     }
   }
 
   private native int read(long handler, int fd, ByteBuffer buffer, int capacity)
-    throws ErrnoException;
+      throws ErrnoException;
 
   private native int write(long handler, int fd, ByteBuffer buffer, int length)
-    throws ErrnoException;
+      throws ErrnoException;
 
   private native long seek(long handler, int fd, long offset, int whence)
-    throws ErrnoException;
+      throws ErrnoException;
 
   private native StructStat fstat(long handler, int fd) throws ErrnoException;
 

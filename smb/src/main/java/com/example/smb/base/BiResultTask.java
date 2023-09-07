@@ -1,16 +1,37 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.base;
 
 import android.os.AsyncTask;
+import androidx.annotation.IntDef;
+import androidx.annotation.Nullable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 public abstract class BiResultTask<Param, Progress, Result>
-extends AsyncTask<Param, Progress, Result> {
+    extends AsyncTask<Param, Progress, Result> {
 
   private volatile Exception mException;
 
   public abstract Result run(Param... params) throws Exception;
 
   @Override
-  protected Result doInBackground(Param... params) {
+  public final @Nullable Result doInBackground(Param... params) {
     try {
       return run(params);
     } catch (Exception e) {
@@ -23,7 +44,7 @@ extends AsyncTask<Param, Progress, Result> {
   public void onFailed(Exception exception) {}
 
   @Override
-  protected void onPostExecute(Result result) {
+  public final void onPostExecute(@Nullable Result result) {
     if (mException == null) {
       onSucceeded(result);
     } else {

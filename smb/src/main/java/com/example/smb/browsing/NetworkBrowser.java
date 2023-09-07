@@ -1,3 +1,20 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.smb.browsing;
 
 import android.net.Uri;
@@ -17,6 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+/**
+ * This class discovers Samba servers and shares under them available on the local network.
+ */
 public class NetworkBrowser {
   private static final Uri SMB_BROWSING_URI = Uri.parse("smb://");
 
@@ -34,6 +55,10 @@ public class NetworkBrowser {
     mClient = client;
   }
 
+  /**
+   * Asynchronously get available servers and shares under them.
+   * A server name is mapped to the list of its children.
+   */
   public AsyncTask getSharesAsync(OnTaskFinishedCallback<Map<String, List<String>>> callback) {
     AsyncTask<Void, Void, Map<String, List<String>>> loadServersTask = new LoadServersTask(callback);
 
@@ -51,7 +76,7 @@ public class NetworkBrowser {
       try {
         shares.put(server, getSharesForServer(server));
       } catch (IOException e) {
-        Log.e(TAG, "Failed to load shares for  server", e);
+        Log.e(TAG, "Failed to load shares for server", e);
       }
     }
 
@@ -93,16 +118,16 @@ public class NetworkBrowser {
   }
 
   private class LoadServersTask extends AsyncTask<Void, Void, Map<String, List<String>>> {
-    final OnTaskFinishedCallback<Map<String, List<String>>> mCallback;
+    final OnTaskFinishedCallback<Map<String, List<String>>>  mCallback;
 
     private BrowsingException mException;
 
-    LoadServersTask(OnTaskFinishedCallback<Map<String, List<String>>> callback) {
+    LoadServersTask(OnTaskFinishedCallback<Map<String, List<String>>>  callback) {
       mCallback = callback;
     }
 
     @Override
-    protected Map<String, List<String>> doInBackground(Void... voids) {
+    protected Map<String, List<String>>  doInBackground(Void... voids) {
       try {
         return getShares();
       } catch (BrowsingException e) {
@@ -112,7 +137,7 @@ public class NetworkBrowser {
       }
     }
 
-    protected void onPostExecute(Map<String, List<String>> servers) {
+    protected void onPostExecute(Map<String, List<String>>  servers) {
       if (servers != null) {
         mCallback.onTaskFinished(OnTaskFinishedCallback.SUCCEEDED, servers, null);
       } else {
